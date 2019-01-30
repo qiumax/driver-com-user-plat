@@ -1,0 +1,519 @@
+extends layouts/master
+
+
+block content
+    div.row-fluid(style="padding-top:20px;")
+        div.widget.widget-padding.span12
+            div.widget-header
+                i.icon-list-alt
+                h5 发单
+            div.widget-body
+                div.widget-forms.clearfix
+                    form#form.form-horizontal(action="/api/account/add", method="POST")
+                        div.control-group
+                            label.control-label 车长：
+                            div.controls
+                                select#truck.span7(onchange="truckchange()")
+                                    -for(var i=0;i<trucks.length;i++)
+                                        option(value='#{trucks[i]._id}') #{trucks[i].name} | #{trucks[i].load} 吨 | #{trucks[i].size}
+
+                        div.control-group
+                            label.control-label 车型：
+                            div.controls
+                                select#trucktype.span7(onchange="trucktypechange()")
+                                    option(value='不限') 不限
+                                    option(value='高栏') 高栏
+                                    option(value='平板') 平板
+                                    option(value='箱式') 箱式
+
+                        div.control-group
+                            label.control-label 收货人信息：
+                            div.controls
+                                    select#toinfo.span7(onchange="tochange()")
+                                        option(value="0") 请选择
+                                        -for(var i=0;i<adds.length;i++)
+                                            option(value='#{adds[i]._id}') #{adds[i].name}#{adds[i].phone}
+
+                        div.control-group
+                            label.control-label 收货人：
+                            div.controls
+                                div.input-prepend
+                                    input(type="hidden" name="tolongitude",id="tolongitude")
+                                    input(type="hidden" name="tolatitude",id="tolatitude")
+                                    input(type="hidden" name="tocity" id='tocity')
+                                    span.add-on(style="width:50px") 姓名
+                                    input.span3(type="text", name="toname",id="toname", required)
+                                    span.add-on(style="width:50px") 电话
+                                    input.span4(type="text", name="tophone", id="tophone",required)
+
+
+                        div.control-group
+                            label.control-label 收货地址：
+                            div.controls
+                                input.span7(type="text", name="toaddress",id="toaddress",onblur="toaddchange()", required)
+                                p#username_hint.help-block.text-red
+
+                        div.control-group
+                            label.control-label 发货人信息：
+                            div.controls
+                                    select#frominfo.span7(onchange="fromchange()")
+                                        option(value="0") 请选择
+                                        -for(var i=0;i<adds.length;i++)
+                                            option(value='#{adds[i]._id}') #{adds[i].name}#{adds[i].phone}
+
+                        div.control-group
+                            label.control-label 发货人：
+                            div.controls
+                                div.input-prepend
+                                    input(type="hidden" name="fromlongitude" id="fromlongitude")
+                                    input(type="hidden" name="fromlatitude" id="fromlatitude")
+                                    input(type="hidden" name="fromcity" id="fromcity")
+                                    span.add-on(style="width:50px") 姓名
+                                    input.span3(type="text", name="fromname",id="fromname", required)
+                                    span.add-on(style="width:50px") 电话
+                                    input.span4(type="text", name="fromphone",id="fromphone", required)
+
+
+                        div.control-group
+                            label.control-label 发货地址：
+                            div.controls
+                                input.span7(type="text", name="fromaddress", id="fromaddress",onblur="fromaddchange()", required)
+                                p#fromadd_hint.help-block.text-red
+
+
+
+                        div.control-group
+                            label.control-label 发货时间：
+                            div.controls
+                              div.input-prepend
+                                span.add-on 日
+                                select.span5#date(onchange="datechange()")
+                                  option(value='')
+                                  -for(var i=0;i<datearr.length;i++)
+                                    option(value='#{datearr[i]}') #{datearr[i]}
+
+                                span.add-on 时
+                                select.span4#hour(onchange="hourchange()")
+                                  option(value='')
+                                  -for(var i=0;i<hourarr.length;i++)
+                                    option(value='#{hourarr[i]}') #{hourarr[i]}
+
+                                span.add-on 分
+                                select.span3#min(onchange="minchange()")
+                                  option(value='')
+                                  -for(var i=0;i<minarr.length;i++)
+                                    option(value='#{minarr[i]}') #{minarr[i]}
+
+
+                        div.control-group
+                            label.control-label 货物名称：
+                            div.controls
+                                input.span7(type="text", id="cargo", name="cargo", required,onblur="cargochange()")
+                                p#cargo_hint.help-block.text-red
+
+                        div.control-group
+                            label.control-label 货物重量(吨)：
+                            div.controls
+                                input.span7(type="text", id="mass",name="mass", required,onblur="masschange()")
+                                p#mass_hint.help-block.text-red
+
+                        div.control-group
+                            label.control-label 货物尺寸(米)：
+                            div.controls
+                                div.input-prepend
+                                    span.add-on 长
+                                    input.span2(type="text", id="changdu", name="changdu", required,onblur="changduchange()")
+                                    span.add-on 宽
+                                    input.span2(type="text", id="kuandu", name="kuandu", required,onblur="kuanduchange()")
+                                    span.add-on 高
+                                    input.span2(type="text", id="gaodu", name="gaodu", required,onblur="gaoduchange()")
+
+                        div.control-group
+                            label.control-label 备注：
+                            div.controls
+                                input.span7(type="text", id="remark", name="remark", required,onblur="remarkchange()")
+                                p#remark_hint.help-block.text-red
+
+                        div.control-group
+                          label.control-label 金额：
+                          div.controls
+                            p#money_total(style="margin-top:5px;color:#EC2D14;" )
+                            p#money_detail
+                            input(type="hidden" name="distance",id="distance")
+                            input(type='hidden' name='account_id' id='account_id' value='#{account_id}')
+                            input(type='hidden' name='price' id='price')
+                            input(type="hidden" name="fhdate",id="fhdate")
+                            input(type="hidden" name="fhhour",id="fhhour")
+                            input(type="hidden" name="fhmin",id="fhmin")
+                            input(type="hidden" name="datetime",id="datetime")
+                            input(type="hidden" name="truck_selected",id="truck_selected" value="#{trucks[0]._id}")
+                            input(type="hidden" name="trucktype_selected",id="trucktype_selected" value='不限')
+                            input(type="hidden" name="price_dun" id="price_dun" value="#{price_dun}")
+
+            div.widget-footer
+                button.btn.btn-primary(type="button" onclick="submitform()") 提交
+
+    script.
+        function fromaddchange() {
+            var add = $("#fromaddress").val()
+            if(!add || add=='') {
+                $("#fromadd_hint").html('发货地址不能为空')
+                return
+            }
+            else
+            {
+                console.log(add)
+                getlongandlan(add,1)
+            }
+
+        }
+        function toaddchange() {
+            var add = $("#toaddress").val()
+            if(!add || add==''){
+                $("#toadd_hint").html('收货地址不能为空')
+            }
+            else
+            {
+                getlongandlan(add,2)
+            }
+        }
+        function fromchange() {
+            console.log('----')
+            var frominfo  = document.getElementById("frominfo");
+            console.log(frominfo.selectedIndex)
+            var addid = frominfo.options[frominfo.selectedIndex].value;
+            getaddress(addid,1)
+        }
+        function tochange() {
+            console.log('----')
+            var toinfo = document.getElementById("toinfo");
+            console.log(toinfo.selectedIndex)
+            var addid = toinfo.options[toinfo.selectedIndex].value;
+            getaddress(addid,2)
+        }
+        function getaddress(id,type) {
+            $.ajax({
+                url: '/api/publish/addr_detail',
+                data: {
+                    id: id
+                },
+                type: 'POST',
+                cache: false,
+                dataType: 'json',
+                success: function (data) {
+                    console.log(data)
+
+                    if (type == 1) {
+                        console.log('12')
+                        console.log(data.add)
+                        console.log(data.add.longitude)
+                        $("#fromname").val(data.add.name)
+                        $("#fromphone").val(data.add.phone)
+                        $("#fromcity").val(data.add.city)
+                        $("#fromlongitude").val(data.add.longitude)
+                        $("#fromlatitude").val(data.add.latitude)
+                        $("#fromaddress").val(data.add.address + data.add.note)
+                    }
+                    else if(type==2)
+                    {
+                        console.log('3')
+                        $("#toname").val(data.add.name)
+                        $("#tophone").val(data.add.phone)
+                        $("#tocity").val(data.add.city)
+                        $("#tolongitude").val(data.add.longitude)
+                        $("#tolatitude").val(data.add.latitude)
+                        $("#toaddress").val(data.add.address + data.add.note)
+                    }
+                    console.log($("#fromlongitude").val())
+                    caldistance()
+                }
+            })
+        }
+
+        function caldistance(){
+            console.log('caldistance')
+            AMap.plugin('AMap.TruckDriving',function () {
+                var driving = new AMap.TruckDriving({
+                    policy:AMap.DrivingPolicy.LEAST_TIME
+                })
+                var fromlng = $("#fromlongitude").val()
+                var fromlat = $("#fromlatitude").val()
+                var tolng = $("#tolongitude").val()
+                var tolat = $("#tolatitude").val()
+                console.log(fromlat)
+                console.log(fromlng)
+                console.log(tolat)
+                console.log(tolng)
+                if(fromlng && fromlat && tolng && tolat){
+                    var startLngLat = [fromlng,fromlat]
+                    var endLngLat = [tolng,tolat]
+                    driving.search(startLngLat,endLngLat,function (status,result) {
+                        console.log(status)
+                        console.log(result)
+                        console.log(result.info)
+                        if(result.info=='OK')
+                        {
+                            console.log(result.routes[0])
+                            var distance = Math.round(result.routes[0].distance / 1000)
+                            $("#distance").val(distance)
+                            calprice()
+                            console.log($('#distance').val())
+                        }
+                    })
+                }
+            })
+        }
+        //重量
+        function masschange() {
+            var mass = $("#mass").val()
+            console.log(mass>0)
+            console.log(!isNaN(mass))
+            if(!isNaN(mass) && mass>0){
+                calprice()
+            }
+            else
+            {
+                $("#mass_hint").html("请输入数字");
+                $("#mass").val('')
+            }
+        }
+        //日期
+        function datechange() {
+          console.log('----')
+          var dateinfo = document.getElementById("date");
+          var date = dateinfo.options[dateinfo.selectedIndex].value;
+          $("#fhdate").val(date)
+          caldate()
+        }
+        function hourchange() {
+          console.log('----')
+          var hourinfo = document.getElementById("hour");
+          var hour = hourinfo.options[hourinfo.selectedIndex].value;
+          $("#fhhour").val(hour)
+          caldate()
+        }
+        function minchange() {
+          console.log('----')
+          var mininfo = document.getElementById("min");
+          var min = mininfo.options[mininfo.selectedIndex].value;
+          $("#fhmin").val(min)
+          caldate()
+        }
+
+        //货物
+        function cargochange() {
+           var cargo = $("#cargo").val()
+           if(!cargo || cargo==''){
+               $("#cargo_hint").html("请输入货物名称")
+           }
+        }
+        //长
+        function changduchange() {
+            var changdu = $("#changdu").val()
+            if (isNaN(changdu) || changdu<=0) {
+                $("#changdu").val('0')
+            }
+        }
+        //宽
+        function kuanduchange() {
+            var kuandu = $("#kuandu").val()
+            if (isNaN(kuandu) || kuandu <= 0) {
+                $("#kuandu").val('0')
+            }
+        }
+        //高
+        function gaoduchange() {
+            var gaodu = $("#gaodu").val()
+            if (isNaN(gaodu) || gaodu <= 0) {
+                $("#gaodu").val('0')
+            }
+        }
+        //truck
+        function truckchange() {
+          var truckinfo = document.getElementById("truck");
+          var truck = truckinfo.options[truckinfo.selectedIndex].value;
+          $("#truck_selected").val(truck)
+        }
+        //truck
+        function trucktypechange() {
+          var trucktypeinfo = document.getElementById("trucktype");
+          var trucktype = trucktypeinfo.options[trucktypeinfo.selectedIndex].value;
+          $("#trucktype_selected").val(trucktype)
+          console.log(trucktype)
+        }
+        //备注
+        function remarkchange() {
+            var remark = $("#remark").val()
+            if (!remark || remark == '') {
+                $("#remark_hint").html("请输入备注")
+            }
+        }
+        //计算发货时间
+        function caldate() {
+            var date = $('#fhdate').val()
+            var hour = $('#fhhour').val()
+            var min = $('#fhmin').val()
+            if(!date || date=='' || !hour || hour=='' || !min || min==''){
+                console.log('none')
+            }
+            else{
+                var datetime = date+" "+hour+":"+min
+                datetime = new Date(datetime)
+                console.log(datetime.getTime()/1000)
+                $("#datetime").val(datetime.getTime()/1000)
+            }
+        }
+        function getlongandlan(add,type) {
+            $.ajax({
+                url: '/api/publish/getlongandlan',
+                data: {
+                    add: add
+                },
+                type: 'POST',
+                cache: false,
+                dataType: 'json',
+                success: function (data) {
+                    console.log(data)
+                    if (data.status==0) {
+                        if(type==1){
+                            $("#fromlongitude").val(data.result.location.lng)
+                            $("#fromlatitude").val(data.result.location.lat)
+                            $("fromcity").val(data.result.address_components.city)
+                        }
+                        else if(type==2){
+                            $("#tolongitude").val(data.result.location.lng)
+                            $("#tolatitude").val(data.result.location.lat)
+                            $("#tocity").val(data.result.address_components.city)
+                        }
+                        console.log(data.result.address_components.city)
+
+                        caldistance()
+                    }
+
+                },
+                fail:function (data) {
+                    console.log(data)
+                }
+            })
+        }
+        function submitform() {
+            console.log('--')
+            //校验
+            var truck_id = $("#truck_selected").val()
+            var truck_type = $("#trucktype_selected").val()
+            var time = $("#datetime").val()
+            var cargo = $("#cargo").val()
+            var chang = $('#changdu').val()
+            var kuan = $("#kuandu").val()
+            var gao = $("#gaodu").val()
+            var remark = $("#remark").val()
+            var price_type='mass'
+            var mass=$('#mass').val()
+            var distance = $('#distance').val()
+            var price = $('#price').val()
+            var account_id = $('#account_id').val()
+            if(!time || time==''){
+                alert('发货时间不能为空')
+                return
+            }
+            if(!cargo || cargo=='') {
+                alert('货物名称不能为空')
+                reutrn
+            }
+            if(!chang || chang==0) alert('长度不能为空')
+            if(!kuan || kuan==0) {
+                alert('宽度不能为空')
+                reutrn
+            }
+            if(!gao || gao==0) {
+                alert('高度不能为空')
+                return
+            }
+            if(!remark || remark==''){
+                alert('备注不能为空')
+                return
+            }
+            if(!mass || mass=='' || mass==0){
+                alert('重量不能为空')
+                return
+            }
+            var from = JSON.stringify({
+                    city: $("#fromcity").val(),
+                    address: $("#fromaddress").val(),
+                    name: $("#fromname").val(),
+                    phone: $("#fromphone").val(),
+                    location: {
+                      type: "Point",
+                      coordinates: [parseFloat($("#fromlongitude").val()), parseFloat($("#fromlatitude").val())]
+                    }
+            })
+            var to = JSON.stringify({
+              city: $("#tocity").val(),
+              address: $("#toaddress").val(),
+              name: $("#toname").val(),
+              phone: $("#tophone").val(),
+              location: {
+                type: "Point",
+                coordinates: [parseFloat($("#tolongitude").val()), parseFloat($("#tolatitude").val())]
+              }
+            })
+
+            $.ajax({
+                  url:'/api/publish/publish',
+                  data:{
+                    from:from,
+                    to:to,
+                    time:time,
+                    cargo:cargo,
+                    cargo_size:chang+" * "+kuan+" * "+gao,
+                    need_remark:remark,
+                    truck_type:truck_type,
+                    price_type:price_type,
+                    mass:mass,
+                    distance:distance,
+                    volume:0,
+                    truck_id:truck_id,
+                    price:price,
+                    account_id:account_id
+                },
+                type:'POST',
+                dataType:'json',
+                success:function (data) {
+                    console.log(data)
+                    if(data.code == 1){
+                        alert('提交成功')
+                        window.location.reload()
+                    }
+                    else
+                    {
+                        alert('提交失败，请联系管理员')
+                    }
+                },
+                fail:function (err) {
+                    alert('提交失败,请重试')
+                }
+              })
+            console.log(from)
+
+
+
+        }
+
+        function calprice() {
+            console.log(mass)
+            var mass = $("#mass").val()
+            var price = $("#price_dun").val()
+            var distance  = $("#distance").val()
+            if(!distance || distance==0 || !mass || mass==0){
+                console.log('--')
+            }
+            else
+            {
+                $('#price').val(Math.round(distance * mass * price))
+                var money = Math.round(distance * mass * price) + '元'
+                var money_detail = price +'元/吨/公里 * ' + distance +'公里 * '+mass+'吨'
+                $('#money_total').html(money)
+                $('#money_detail').html(money_detail)
+
+            }
+        }
