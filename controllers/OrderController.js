@@ -56,7 +56,7 @@ orderController.finish = function(req, res) {
 
 	var user = req.session.passport.user
 
-    Account.findOne({phone:user}).then(acctount=>{
+    Account.findOne({phone:user}).then(account=>{
             Order.count({
             	account:account._id,
 	            $or:[

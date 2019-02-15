@@ -80,7 +80,19 @@ block content
                                 input.span7(type="text", name="fromaddress", id="fromaddress",onblur="fromaddchange()", required)
                                 p#fromadd_hint.help-block.text-red
 
+                        div.control-group
+                          label.control-label 配载：
+                          div.controls
+                            select#peizai_select.span7(onchange="peizaichange()")
+                              option(value='zhengche') 整车
+                              option(value='peizai') 配载
 
+                        div.control-group
+                          label.control-label 超限：
+                          div.controls
+                            select#chaoxian_select.span7(onchange="chaoxianchange()")
+                              option(value='notchao') 未超限
+                              option(value='chao') 超限
 
                         div.control-group
                             label.control-label 发货时间：
@@ -103,6 +115,29 @@ block content
                                   option(value='')
                                   -for(var i=0;i<minarr.length;i++)
                                     option(value='#{minarr[i]}') #{minarr[i]}
+
+
+                        div.control-group
+                          label.control-label 到货时间：
+                          div.controls
+                            div.input-prepend
+                              span.add-on 日
+                              select.span5#arrive_date(onchange="arrive_datechange()")
+                                option(value='')
+                                -for(var i=0;i<datearr.length;i++)
+                                  option(value='#{datearr[i]}') #{datearr[i]}
+
+                              span.add-on 时
+                              select.span4#arrive_hour(onchange="arrive_hourchange()")
+                                option(value='')
+                                -for(var i=0;i<hourarr.length;i++)
+                                  option(value='#{hourarr[i]}') #{hourarr[i]}
+
+                              span.add-on 分
+                              select.span3#arrive_min(onchange="arrive_minchange()")
+                                option(value='')
+                                -for(var i=0;i<minarr.length;i++)
+                                  option(value='#{minarr[i]}') #{minarr[i]}
 
 
                         div.control-group
@@ -129,6 +164,12 @@ block content
                                     input.span2(type="text", id="gaodu", name="gaodu", required,onblur="gaoduchange()")
 
                         div.control-group
+                          label.control-label 油卡(元)：
+                          div.controls
+                            input.span7(type="text", id="youka",name="youka", required,onblur="youkachange()" value=0)
+                            p#youka_hint.help-block.text-red
+
+                        div.control-group
                             label.control-label 备注：
                             div.controls
                                 input.span7(type="text", id="remark", name="remark", required,onblur="remarkchange()")
@@ -146,9 +187,15 @@ block content
                             input(type="hidden" name="fhhour",id="fhhour")
                             input(type="hidden" name="fhmin",id="fhmin")
                             input(type="hidden" name="datetime",id="datetime")
+                            input(type="hidden" name="dhdate",id="dhdate")
+                            input(type="hidden" name="dhhour",id="dhhour")
+                            input(type="hidden" name="dhmin",id="dhmin")
+                            input(type="hidden" name="peizai",id="peizai" value="zhengche")
+                            input(type="hidden" name="chaoxian",id="chaoxian" value="notchao")
+                            input(type="hidden" name="arrive_datetime",id="arrive_datetime")
                             input(type="hidden" name="truck_selected",id="truck_selected" value="#{trucks[0]._id}")
                             input(type="hidden" name="trucktype_selected",id="trucktype_selected" value='不限')
-                            input(type="hidden" name="price_dun" id="price_dun" value="#{price_dun}")
+                            input(type="hidden" name="price_dun" id="price_dun" value="#{price_zhengche_notchao}")
 
             div.widget-footer
                 button.btn.btn-primary(type="button" onclick="submitform()") 提交
@@ -191,6 +238,26 @@ block content
             var addid = toinfo.options[toinfo.selectedIndex].value;
             getaddress(addid,2)
         }
+
+        function getPrice(price_type, chaoxian_type) {
+          console.log('getPrice')
+          $.ajax({
+            url: '/api/publish/getPrice',
+            data: {
+                price_type:price_type,
+                chaoxian_type:chaoxian_type
+            },
+            type: 'POST',
+            cache: false,
+            dataType: 'json',
+            success: function (data) {
+              console.log(data)
+              $('#price_dun').val(data.price)
+              calprice()
+            }
+          })
+        }
+
         function getaddress(id,type) {
             $.ajax({
                 url: '/api/publish/addr_detail',
@@ -234,8 +301,11 @@ block content
             console.log('caldistance')
             AMap.plugin('AMap.TruckDriving',function () {
                 var driving = new AMap.TruckDriving({
-                    policy:AMap.DrivingPolicy.LEAST_TIME
+                    policy:8,
+                    size:4
                 })
+                var path = []
+
                 var fromlng = $("#fromlongitude").val()
                 var fromlat = $("#fromlatitude").val()
                 var tolng = $("#tolongitude").val()
@@ -245,9 +315,15 @@ block content
                 console.log(tolat)
                 console.log(tolng)
                 if(fromlng && fromlat && tolng && tolat){
-                    var startLngLat = [fromlng,fromlat]
-                    var endLngLat = [tolng,tolat]
-                    driving.search(startLngLat,endLngLat,function (status,result) {
+                    //var startLngLat = [fromlng,fromlat]
+                    //var endLngLat = [tolng,tolat]
+                    path.push({
+                      lnglat: [fromlng,fromlat]
+                    })
+                    path.push({
+                      lnglat: [tolng,tolat]
+                    })
+                    driving.search(path,function (status,result) {
                         console.log(status)
                         console.log(result)
                         console.log(result.info)
@@ -277,6 +353,19 @@ block content
                 $("#mass").val('')
             }
         }
+
+        function youkachange() {
+            var youka = $("#youka").val()
+            console.log(mass > 0)
+            console.log(!isNaN(youka))
+            if (!isNaN(youka)) {
+              console.log('ok')
+            }
+            else {
+              $("#youka_hint").html("请输入数字");
+              $("#youka").val('0')
+            }
+        }
         //日期
         function datechange() {
           console.log('----')
@@ -300,6 +389,30 @@ block content
           caldate()
         }
 
+        function peizaichange() {
+            var peizaiinfo = document.getElementById("peizai_select")
+            var peizai  = peizaiinfo.options[peizaiinfo.selectedIndex].value
+            $("#peizai").val(peizai)
+            //console.log($("#peizai").val())
+            var chaoxian = $("#chaoxian").val()
+            if(chaoxian)
+            {
+                getPrice(peizai,chaoxian)
+            }
+
+
+        }
+
+        function chaoxianchange() {
+            var chaoxianinfo = document.getElementById("chaoxian_select")
+            var chaoxian = chaoxianinfo.options[chaoxianinfo.selectedIndex].value
+            $("#chaoxian").val(chaoxian)
+            var peizai = $("#peizai").val()
+            if (peizai) {
+              getPrice(peizai,chaoxian)
+            }
+
+        }
         //货物
         function cargochange() {
            var cargo = $("#cargo").val()
@@ -363,6 +476,46 @@ block content
                 $("#datetime").val(datetime.getTime()/1000)
             }
         }
+
+        //日期
+        function arrive_datechange() {
+          console.log('----')
+          var dateinfo = document.getElementById("arrive_date");
+          var date = dateinfo.options[dateinfo.selectedIndex].value;
+          $("#dhdate").val(date)
+          calarrivedate()
+        }
+        function arrive_hourchange() {
+          console.log('----')
+          var hourinfo = document.getElementById("arrive_hour");
+          var hour = hourinfo.options[hourinfo.selectedIndex].value;
+          $("#dhhour").val(hour)
+          calarrivedate()
+        }
+        function arrive_minchange() {
+          console.log('----')
+          var mininfo = document.getElementById("arrive_min");
+          var min = mininfo.options[mininfo.selectedIndex].value;
+          $("#dhmin").val(min)
+          calarrivedate()
+        }
+
+        //计算到货时间
+        function calarrivedate() {
+          var date = $('#dhdate').val()
+          var hour = $('#dhhour').val()
+          var min = $('#dhmin').val()
+          if (!date || date == '' || !hour || hour == '' || !min || min == '') {
+            console.log('none')
+          }
+          else {
+            var datetime = date + " " + hour + ":" + min
+            datetime = new Date(datetime)
+            console.log(datetime.getTime() / 1000)
+            $("#arrive_datetime").val(datetime.getTime() / 1000)
+          }
+        }
+
         function getlongandlan(add,type) {
             $.ajax({
                 url: '/api/publish/getlongandlan',
@@ -401,7 +554,10 @@ block content
             //校验
             var truck_id = $("#truck_selected").val()
             var truck_type = $("#trucktype_selected").val()
+            var peizai = $("#peizai").val()
+            var chaoxian = $("#chaoxian").val()
             var time = $("#datetime").val()
+            var arrive_time = $("#arrive_datetime").val()
             var cargo = $("#cargo").val()
             var chang = $('#changdu').val()
             var kuan = $("#kuandu").val()
@@ -409,6 +565,7 @@ block content
             var remark = $("#remark").val()
             var price_type='mass'
             var mass=$('#mass').val()
+            var youka=$('#youka').val()
             var distance = $('#distance').val()
             var price = $('#price').val()
             var account_id = $('#account_id').val()
@@ -464,15 +621,19 @@ block content
                     from:from,
                     to:to,
                     time:time,
+                    arrive_time:arrive_time,
                     cargo:cargo,
                     cargo_size:chang+" * "+kuan+" * "+gao,
                     need_remark:remark,
                     truck_type:truck_type,
                     price_type:price_type,
                     mass:mass,
+                    youka:youka,
                     distance:distance,
                     volume:0,
                     truck_id:truck_id,
+                    peizai:peizai,
+                    chaoxian:chaoxian,
                     price:price,
                     account_id:account_id
                 },
